@@ -205,7 +205,7 @@ export const renderOrderReviewPage = (cartItems, subtotal, appliedCoupon) => {
     const content = document.createElement('div');
     content.className = 'order-review';
     content.innerHTML = `
-        <h2>Order Review</h2>
+        <h2>Complete Your Payment</h2>
         <div class="order-review-summary">
             <p>Subtotal: <span>₹${subtotal.toFixed(2)}</span></p>
             <p>Delivery Fee: <span>₹${deliveryFee.toFixed(2)}</span></p>
@@ -230,6 +230,15 @@ export const renderOrderReviewPage = (cartItems, subtotal, appliedCoupon) => {
                 </div>
             </div>
         </div>
+         <div class="upi-details">
+                <p>Pay via UPI ID:</p>
+                <p><strong>foodiedelight@upi</strong></p>
+            </div>
+          <div class="qr-code-container">
+                <p>Scan QR Code:</p>
+                <img src="images/payment_qr.png" alt="Payment QR Code">
+            </div>
+
         <div class="btn-group">
             <button id="back-to-menu-btn" class="btn ghost nav-link" data-page="home">Back to Menu</button>
             <button id="place-order-btn" class="btn primary" ${cartItems.length === 0 ? 'disabled' : ''}>Place Order</button>
@@ -280,6 +289,28 @@ export const renderCartPage = (cartItems) => {
 
     return content;
 };
+
+// export const renderPaymentPage = (totalAmount) => {
+//     const content = document.createElement('div');
+//     content.className = 'payment-page';
+//     content.innerHTML = `
+//         <h1>Complete Your Payment</h1>
+//         <div class="payment-options">
+//             <h3>Total Amount: <strong>$${totalAmount.toFixed(2)}</strong></h3>
+//             <div class="upi-details">
+//                 <p>Pay via UPI ID:</p>
+//                 <p><strong>foodiedelight@upi</strong></p>
+//             </div>
+//             <div class="qr-code-container">
+//                 <p>Or Scan QR Code:</p>
+//                 <img src="payment_qr.png" alt="Payment QR Code">
+//             </div>
+//             <p>Please complete the payment using your preferred UPI app.</p>
+//             <button id="confirm-payment-btn" class="btn primary">I Have Paid</button>
+//         </div>
+//     `;
+//     return content;
+// };
 
 export const categoryFilterDropdownComponent = (activeCategory, categories) => {
     const container = document.createElement('div');
