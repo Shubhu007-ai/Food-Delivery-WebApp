@@ -290,28 +290,6 @@ export const renderCartPage = (cartItems) => {
     return content;
 };
 
-// export const renderPaymentPage = (totalAmount) => {
-//     const content = document.createElement('div');
-//     content.className = 'payment-page';
-//     content.innerHTML = `
-//         <h1>Complete Your Payment</h1>
-//         <div class="payment-options">
-//             <h3>Total Amount: <strong>$${totalAmount.toFixed(2)}</strong></h3>
-//             <div class="upi-details">
-//                 <p>Pay via UPI ID:</p>
-//                 <p><strong>foodiedelight@upi</strong></p>
-//             </div>
-//             <div class="qr-code-container">
-//                 <p>Or Scan QR Code:</p>
-//                 <img src="payment_qr.png" alt="Payment QR Code">
-//             </div>
-//             <p>Please complete the payment using your preferred UPI app.</p>
-//             <button id="confirm-payment-btn" class="btn primary">I Have Paid</button>
-//         </div>
-//     `;
-//     return content;
-// };
-
 export const categoryFilterDropdownComponent = (activeCategory, categories) => {
     const container = document.createElement('div');
     container.className = 'category-filter-dropdown';
