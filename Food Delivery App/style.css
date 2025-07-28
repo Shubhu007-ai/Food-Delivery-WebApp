@@ -635,6 +635,24 @@ body {
   gap: 1.5rem;
 }
 
+.upi-details p {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+}
+
+.upi-details strong {
+    color: var(--primary-color);
+    font-size: 1.3rem;
+}
+
+.qr-code-container img {
+    width: 200px;
+    height: 200px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    padding: 10px;
+}
+
 .discount-input-area {
   display: flex;
   gap: 0.5rem;
@@ -1265,7 +1283,6 @@ body {
   .about-details li {
     font-size: 0.95rem;
   }
-
   .contact-hero {
     padding: 3rem 1rem;
   }
