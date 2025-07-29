@@ -198,6 +198,8 @@ export const renderOrderReviewPage = (cartItems, subtotal, appliedCoupon) => {
             discountAmount = subtotal * (appliedCoupon.discountPercent / 100);
             discountDescription = `-₹${discountAmount.toFixed(2)} (${appliedCoupon.discountPercent}%)`;
         }
+        // Additional logic for other discount types (e.g., BOGO) would go here,
+        // but for a generic coupon input, we only handle percentage/delivery fee.
     }
 
     const estimatedTotal = subtotal + deliveryFee - discountAmount;
@@ -230,16 +232,7 @@ export const renderOrderReviewPage = (cartItems, subtotal, appliedCoupon) => {
                 </div>
             </div>
         </div>
-         <div class="upi-details">
-                <p>Pay via UPI ID:</p>
-                <p><strong>foodiedelight@upi</strong></p>
-            </div>
-          <div class="qr-code-container">
-                <p>Scan QR Code:</p>
-                <img src="images/payment_qr.png" alt="Payment QR Code">
-            </div>
-
-        <div class="btn-group">
+           <div class="btn-group">
             <button id="back-to-menu-btn" class="btn ghost nav-link" data-page="home">Back to Menu</button>
             <button id="place-order-btn" class="btn primary" ${cartItems.length === 0 ? 'disabled' : ''}>Place Order</button>
         </div>
@@ -370,6 +363,100 @@ export const renderSignupPage = () => {
                 <button type="submit" class="btn primary">Sign Up</button>
             </form>
             <p class="auth-switch">Already have an account? <a href="#login" class="nav-link" data-page="login">Login</a></p>
+        </div>
+    `;
+    return content;
+};
+
+export const renderCheckoutPage = (cartItems, subtotal, appliedCoupon) => {
+    let deliveryFee = 80.00;
+    let discountAmount = 0.00;
+    let discountDescription = '₹0.00';
+
+    if (appliedCoupon) {
+        if (appliedCoupon.deliveryDiscount) {
+            deliveryFee = 0.00;
+            discountDescription = 'Free Delivery';
+        }
+        if (appliedCoupon.discountPercent) {
+            discountAmount = subtotal * (appliedCoupon.discountPercent / 100);
+            discountDescription = `-₹${discountAmount.toFixed(2)} (${appliedCoupon.discountPercent}%)`;
+        }
+    }
+    const estimatedTotal = subtotal + deliveryFee - discountAmount;
+
+    const content = document.createElement('div');
+    content.className = 'page-content checkout-page';
+    content.innerHTML = `
+        <div class="checkout-details-container auth-card">
+            <h2>Delivery Details</h2>
+            <form id="checkout-form">
+                <div class="form-group">
+                    <label for="checkout-name">Full Name:</label>
+                    <input type="text" id="checkout-name" placeholder="Your Name" value="John Doe" required>
+                </div>
+                <div class="form-group">
+                    <label for="checkout-phone">Phone Number:</label>
+                    <input type="tel" id="checkout-phone" placeholder="e.g., +91 9876543210" pattern="[0-9]{10}" title="10 digit phone number" value="9876543210" required>
+                </div>
+                <div class="form-group">
+                    <label for="checkout-address1">Address Line 1:</label>
+                    <input type="text" id="checkout-address1" placeholder="House/Flat No., Building Name" value="Apt 101, Sunshine Apartments" required>
+                </div>
+                <div class="form-group">
+                    <label for="checkout-address2">Address Line 2 (Optional):</label>
+                    <input type="text" id="checkout-address2" placeholder="Street, Landmark" value="Near Central Park">
+                </div>
+                <div class="form-group">
+                    <label for="checkout-city">City:</label>
+                    <input type="text" id="checkout-city" placeholder="Your City" value="Flavor Town" required>
+                </div>
+                <div class="form-group">
+                    <label for="checkout-pincode">Pincode:</label>
+                    <input type="text" id="checkout-pincode" placeholder="e.g., 123456" pattern="[0-9]{6}" title="6 digit pincode" value="123456" required>
+                </div>
+                
+                <div class="payment-options-section">
+                    <h2>Payment Method</h2>
+                    <div class="payment-option-group">
+                        <div class="payment-option">
+                            <input type="radio" id="payment-cod" name="payment-method" value="cod" checked>
+                            <label for="payment-cod">Cash on Delivery</label>
+                        </div>
+                        <div class="payment-option">
+                            <input type="radio" id="payment-upi" name="payment-method" value="upi">
+                            <label for="payment-upi">UPI / Scan QR Code</label>
+                        </div>
+                    </div>
+                    <div id="upi-qr-code-container">
+                        <img src="images/payment_qr.png" alt="Scan to Pay UPI">
+                        <p>Scan the QR code with your preferred UPI app (Google Pay, PhonePe, Paytm, etc.) to complete your payment.</p>
+                        <p class="total-amount-display">Total amount to pay: <strong>₹${estimatedTotal.toFixed(2)}</strong></p>
+                    </div>
+                </div>
+
+                <h2 class="order-summary-heading">Order Summary</h2>
+                <div class="order-review-items">
+                    <div id="review-items-list">
+                        ${cartItems.length > 0 ? 
+                            cartItems.map(item => `
+                                <div class="order-review-item">
+                                    <span class="item-name">${item.name}</span>
+                                    <span>₹${item.price.toFixed(2)} x ${item.quantity}</span>
+                                </div>
+                            `).join('')
+                            : '<p>No items in cart to review.</p>'
+                        }
+                    </div>
+                </div>
+                <p class="summary-line">Subtotal: <span>₹${subtotal.toFixed(2)}</span></p>
+                <p class="summary-line">Delivery Fee: <span>₹${deliveryFee.toFixed(2)}</span></p>
+                <p class="summary-line">Discount: <span class="discount-value">${discountDescription}</span></p>
+                <p class="summary-line final-total"><strong>Total:</strong> <strong>₹${estimatedTotal.toFixed(2)}</strong></p>
+
+                <button type="submit" id="confirm-order-btn" class="btn primary" ${cartItems.length === 0 ? 'disabled' : ''}>Confirm Order</button>
+                <button type="button" id="back-to-review-btn" class="btn ghost nav-link" data-page="review">Back to Review</button>
+            </form>
         </div>
     `;
     return content;
