@@ -308,7 +308,6 @@ export const discounts = [
     }
 ];
 
-// New list of food categories for filtering
 export const foodCategories = [
     'All',
     'Indian',

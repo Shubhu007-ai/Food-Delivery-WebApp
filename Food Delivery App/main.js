@@ -1,33 +1,36 @@
-import { navbarComponent, foodCardComponent, cartItemComponent, renderAboutPage, renderOrderTypesPage, renderDiscountsPage, renderContactPage, renderOrderReviewPage, renderCartPage, categoryFilterDropdownComponent, renderLoginPage, renderSignupPage } from './components.js';
+import { navbarComponent, foodCardComponent, cartItemComponent, renderAboutPage, renderOrderTypesPage, renderDiscountsPage, renderContactPage, renderOrderReviewPage, renderCartPage, categoryFilterDropdownComponent, renderLoginPage, renderSignupPage, renderCheckoutPage } from './components.js';
 import { foodItems, foodCategories, discounts } from './data.js';
 
 const appContent = document.getElementById('app-content');
 const navbarContainer = document.getElementById('navbar-container');
 const foodGridContainer = document.getElementById('food-grid-container');
 const categoryFiltersContainer = document.getElementById('category-filters');
-const backToTopBtn = document.getElementById('back-to-top-btn'); 
-const fixedCartBtn = document.getElementById('fixed-cart-btn'); 
-const fixedCartCountSpan = document.getElementById('fixed-cart-count'); 
+const backToTopBtn = document.getElementById('back-to-top-btn');
+const fixedCartBtn = document.getElementById('fixed-cart-btn');
+const fixedCartCountSpan = document.getElementById('fixed-cart-count');
 
 let state = {
     cart: [],
     currentView: 'home',
     searchTerm: '',
-    activeCategory: 'All', 
-    allFoodItems: [...foodItems], 
-    displayedFoodItems: [], 
-    appliedCoupon: null 
+    activeCategory: 'All',
+    allFoodItems: [...foodItems],
+    displayedFoodItems: [],
+    appliedCoupon: null,
+    isLoggedIn: false,
+    redirectAfterAuth: null,
+    selectedPaymentMethod: 'cod'
 };
 
 const updateCartUI = () => {
     const totalItemsInCart = state.cart.reduce((sum, item) => sum + item.quantity, 0);
 
-    fixedCartCountSpan.textContent = totalItemsInCart; 
-    fixedCartBtn.classList.toggle('has-items', totalItemsInCart > 0); 
+    fixedCartCountSpan.textContent = totalItemsInCart;
+    fixedCartBtn.classList.toggle('has-items', totalItemsInCart > 0);
 };
 
 const addToCart = (foodId) => {
-    const food = foodItems.find(item => item.id === foodId); 
+    const food = foodItems.find(item => item.id === foodId);
     if (food) {
         const existingItem = state.cart.find(item => item.id === foodId);
         if (existingItem) {
@@ -35,7 +38,7 @@ const addToCart = (foodId) => {
         } else {
             state.cart.push({ ...food, quantity: 1 });
         }
-        state.appliedCoupon = null; 
+        state.appliedCoupon = null;
         updateCartUI();
         console.log('Cart:', state.cart);
     }
@@ -49,7 +52,7 @@ const removeFromCart = (foodId) => {
         } else {
             state.cart.splice(itemIndex, 1);
         }
-        state.appliedCoupon = null; 
+        state.appliedCoupon = null;
         updateCartUI();
         if (state.currentView === 'cart') {
             renderView('cart');
@@ -60,7 +63,6 @@ const removeFromCart = (foodId) => {
 
 const applyFiltersAndSearch = () => {
     let tempItems = [...state.allFoodItems];
-
     if (state.searchTerm) {
         const lowerCaseSearchTerm = state.searchTerm.toLowerCase();
         tempItems = tempItems.filter(item =>
@@ -74,7 +76,7 @@ const applyFiltersAndSearch = () => {
             item.category && item.category.split('/').some(cat => cat.trim().toLowerCase() === state.activeCategory.toLowerCase())
         );
     }
-    
+
     state.displayedFoodItems = tempItems;
 };
 
@@ -96,8 +98,8 @@ const renderCategoryFilters = () => {
 };
 
 const renderView = (view) => {
-    appContent.innerHTML = ''; 
-    state.currentView = view; 
+    appContent.innerHTML = '';
+    state.currentView = view;
     document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
     const activeLink = document.querySelector(`.nav-link[data-page="${view}"]`);
     if (activeLink) {
@@ -112,20 +114,20 @@ const renderView = (view) => {
     }
 
     if (view === 'home') {
-        appContent.appendChild(categoryFiltersContainer); 
-        appContent.appendChild(foodGridContainer); 
-    
+        appContent.appendChild(categoryFiltersContainer);
+        appContent.appendChild(foodGridContainer);
+
         const searchInput = document.getElementById('food-search-input');
         if (searchInput) {
             searchInput.value = state.searchTerm;
         }
 
         renderCategoryFilters();
-        applyFiltersAndSearch(); 
-        renderFoodList(); 
+        applyFiltersAndSearch();
+        renderFoodList();
     } else {
         foodGridContainer.innerHTML = '';
-        categoryFiltersContainer.innerHTML = ''; 
+        categoryFiltersContainer.innerHTML = '';
         switch (view) {
             case 'about':
                 appContent.appendChild(renderAboutPage());
@@ -139,21 +141,60 @@ const renderView = (view) => {
             case 'contact':
                 appContent.appendChild(renderContactPage());
                 break;
-            case 'cart': 
+            case 'cart':
                 appContent.appendChild(renderCartPage(state.cart));
                 break;
             case 'review':
-                const subtotal = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-                appContent.appendChild(renderOrderReviewPage(state.cart, subtotal, state.appliedCoupon));
+                const subtotalReview = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                appContent.appendChild(renderOrderReviewPage(state.cart, subtotalReview, state.appliedCoupon));
                 break;
             case 'login':
                 appContent.appendChild(renderLoginPage());
+                const loginForm = appContent.querySelector('.auth-form');
+                if (loginForm) {
+                    loginForm.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        state.isLoggedIn = true;
+                        alert('Login successful!');
+                        if (state.redirectAfterAuth) {
+                            renderView(state.redirectAfterAuth);
+                            state.redirectAfterAuth = null;
+                        } else {
+                            renderView('home');
+                        }
+                    });
+                }
                 break;
             case 'signup':
                 appContent.appendChild(renderSignupPage());
+                const signupForm = appContent.querySelector('.auth-form');
+                if (signupForm) {
+                    signupForm.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        state.isLoggedIn = true;
+                        alert('Signup successful! You are now logged in.');
+                        if (state.redirectAfterAuth) {
+                            renderView(state.redirectAfterAuth);
+                            state.redirectAfterAuth = null;
+                        } else {
+                            renderView('home');
+                        }
+                    });
+                }
+                break;
+            case 'checkout':
+                const subtotalCheckout = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                appContent.appendChild(renderCheckoutPage(state.cart, subtotalCheckout, state.appliedCoupon));
+
+                const checkoutForm = appContent.querySelector('#checkout-form');
+                if (checkoutForm) {
+                    checkoutForm.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        confirmOrder();
+                    });
+                }
                 break;
             default:
-               
                 break;
         }
     }
@@ -167,8 +208,8 @@ const handleSearch = (searchTerm) => {
 const applyCoupon = (couponCode) => {
     if (!couponCode) {
         alert('Please enter a coupon code.');
-        state.appliedCoupon = null; 
-        renderView('review'); 
+        state.appliedCoupon = null;
+        renderView('review');
         return;
     }
 
@@ -183,8 +224,8 @@ const applyCoupon = (couponCode) => {
 
     if (!discount) {
         alert('Invalid coupon code. Please try again.');
-        state.appliedCoupon = null; 
-        renderView('review'); 
+        state.appliedCoupon = null;
+        renderView('review');
         return;
     }
 
@@ -198,20 +239,36 @@ const applyCoupon = (couponCode) => {
     }
 
     if (discount.discountPercent || discount.deliveryDiscount) {
-        state.appliedCoupon = discount; 
+        state.appliedCoupon = discount;
         alert(`Coupon "${discount.name}" applied successfully!`);
     } else {
         alert(`Coupon "${discount.name}" applied, but it's a special offer (e.g., Buy One Get One) not visible here.`);
-        state.appliedCoupon = discount; 
+        state.appliedCoupon = discount;
     }
-    
-    renderView('review'); 
+
+    renderView('review');
 };
 
-const placeOrder = () => {
+const handlePlaceOrderClick = () => {
+    if (state.cart.length === 0) {
+        alert('Your cart is empty. Please add items before placing an order.');
+        return;
+    }
+
+    if (!state.isLoggedIn) {
+        alert('Please login or sign up to place your order.');
+        state.redirectAfterAuth = 'checkout';
+        renderView('login');
+        return;
+    }
+
+    renderView('checkout');
+};
+
+const confirmOrder = () => {
     if (state.cart.length > 0) {
         const subtotal = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        let deliveryFee = 80.00; 
+        let deliveryFee = 80.00;
         let discountAmount = 0.00;
 
         if (state.appliedCoupon) {
@@ -222,15 +279,22 @@ const placeOrder = () => {
                 discountAmount = subtotal * (state.appliedCoupon.discountPercent / 100);
             }
         }
-        
+
         const finalTotal = subtotal + deliveryFee - discountAmount;
-        alert('Order Placed Successfully! Your total was ₹' + finalTotal.toFixed(2) + '. Thank you for your purchase.'); 
-        state.cart = []; 
+        let paymentMessage = '';
+        if (state.selectedPaymentMethod === 'cod') {
+            paymentMessage = 'Payment will be collected upon delivery (Cash on Delivery).';
+        } else if (state.selectedPaymentMethod === 'upi') {
+            paymentMessage = 'Payment via UPI/QR code acknowledged.';
+        }
+
+        alert('Order Placed Successfully! Your total was ₹' + finalTotal.toFixed(2) + '. ' + paymentMessage + ' Thank you for your purchase.');
+        state.cart = [];
         state.appliedCoupon = null;
         updateCartUI();
         state.searchTerm = '';
-        state.activeCategory = 'All'; 
-        renderView('home'); 
+        state.activeCategory = 'All';
+        renderView('home');
     } else {
         alert('Your cart is empty. Please add items before placing an order.');
     }
@@ -243,30 +307,29 @@ document.addEventListener('DOMContentLoaded', () => {
     navbarContainer.appendChild(navbar);
 
     renderView('home');
-    updateCartUI(); 
+    updateCartUI();
 
     const navbarLinks = document.getElementById('navbar-links');
     const navbarToggler = document.querySelector('.navbar-toggler');
 
     navbarContainer.addEventListener('click', (event) => {
         if (event.target.matches('.nav-link')) {
-            event.preventDefault(); 
+            event.preventDefault();
             const page = event.target.dataset.page;
             if (page) {
-                if (page !== 'cart') { 
+                if (page !== 'cart' && page !== 'review' && page !== 'checkout') {
                     state.searchTerm = '';
                     state.activeCategory = 'All';
                 }
-                state.appliedCoupon = null; 
                 renderView(page);
             }
         } else if (event.target.matches('.navbar-brand')) {
-             event.preventDefault();
-             state.searchTerm = ''; 
-             state.activeCategory = 'All';
-             state.appliedCoupon = null;
-             renderView('home');
-        } else if (event.target.closest('.navbar-toggler')) { 
+            event.preventDefault();
+            state.searchTerm = '';
+            state.activeCategory = 'All';
+            state.appliedCoupon = null;
+            renderView('home');
+        } else if (event.target.closest('.navbar-toggler')) {
             navbarLinks.classList.toggle('show');
             navbarToggler.classList.toggle('active');
         }
@@ -289,10 +352,10 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (event.target.matches('.category-dropdown-item')) {
             const category = event.target.dataset.category;
             if (category) {
-                state.activeCategory = category; 
+                state.activeCategory = category;
                 state.searchTerm = '';
-                renderView('home'); 
-                dropdownContent.classList.remove('show'); 
+                renderView('home');
+                dropdownContent.classList.remove('show');
                 toggleButton.classList.remove('active');
             }
         }
@@ -320,46 +383,58 @@ document.addEventListener('DOMContentLoaded', () => {
             const foodId = event.target.dataset.id;
             addToCart(foodId);
         } else if (event.target.id === 'place-order-btn') {
-            placeOrder();
-        } else if (event.target.id === 'proceed-to-checkout-btn') { 
+            handlePlaceOrderClick();
+        } else if (event.target.id === 'proceed-to-checkout-btn') {
             renderView('review');
-        } else if (event.target.matches('.remove-from-cart-btn')) { 
+        } else if (event.target.matches('.remove-from-cart-btn')) {
             const foodId = event.target.dataset.id;
             removeFromCart(foodId);
         } else if (event.target.matches('.nav-link[data-page="home"]')) {
             event.preventDefault();
             const page = event.target.dataset.page;
             if (page) {
-                state.searchTerm = ''; 
+                state.searchTerm = '';
                 state.activeCategory = 'All';
-                state.appliedCoupon = null; 
+                state.appliedCoupon = null;
                 renderView(page);
             }
-        } else if (event.target.matches('.about-call-to-action .nav-link')) { 
-            event.preventDefault(); 
+        } else if (event.target.matches('.about-call-to-action .nav-link')) {
+            event.preventDefault();
             const page = event.target.dataset.page;
             if (page) {
-                state.searchTerm = ''; 
-                state.activeCategory = 'All'; 
-                state.appliedCoupon = null; 
+                state.searchTerm = '';
+                state.activeCategory = 'All';
+                state.appliedCoupon = null;
                 renderView(page);
             }
-        } else if (event.target.id === 'apply-coupon-btn') { 
+        } else if (event.target.id === 'apply-coupon-btn') {
             const couponInput = document.getElementById('coupon-code-input');
             const couponCode = couponInput ? couponInput.value.trim() : '';
             applyCoupon(couponCode);
-        } else if (event.target.matches('.auth-switch .nav-link')) { 
+        } else if (event.target.matches('.auth-switch .nav-link')) {
             event.preventDefault();
             const page = event.target.dataset.page;
             if (page) {
                 renderView(page);
             }
+        } else if (event.target.id === 'back-to-review-btn') {
+            renderView('review');
+        } else if (event.target.matches('input[name="payment-method"]')) {
+            state.selectedPaymentMethod = event.target.value;
+            const upiQrContainer = document.getElementById('upi-qr-code-container');
+            if (upiQrContainer) {
+                if (state.selectedPaymentMethod === 'upi') {
+                    upiQrContainer.classList.add('show');
+                } else {
+                    upiQrContainer.classList.remove('show');
+                }
+            }
         }
     });
 
     fixedCartBtn.addEventListener('click', () => {
-        state.searchTerm = ''; 
-        state.activeCategory = 'All'; 
+        state.searchTerm = '';
+        state.activeCategory = 'All';
         renderView('cart');
     });
 
@@ -374,7 +449,7 @@ document.addEventListener('DOMContentLoaded', () => {
     backToTopBtn.addEventListener('click', () => {
         window.scrollTo({
             top: 0,
-            behavior: 'smooth' 
+            behavior: 'smooth'
         });
     });
 });
